@@ -232,7 +232,7 @@ begin
               IncludeTrailingPathDelimiter(
               IncludeTrailingPathDelimiter(
               System.IOUtils.TPath.GetHomePath) +
-              Library') +
+              'Library') +
               appname) +
               pypath;
   // Windows X64 CPU
