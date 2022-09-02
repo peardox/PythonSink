@@ -310,7 +310,7 @@ begin
       Log('Created ' + PyComps[I].ClassName);
     end;
 
-{
+{ Skip this bit for testing
 //  PackageAddExtraUrl(Torch, 'https://download.pytorch.org/whl/cu116');
 }
 
