@@ -406,7 +406,7 @@ begin
         10: Result := TPandas(PyComps[I]).pandas;
         11: Result := TPillow(PyComps[I]).PIL;
         12: Result := TPSUtil(PyComps[I]).psutil;
-        13: Result := TPyQT5(PyComps[I]).qt5;
+        13: Result := TPyQT5(PyComps[I]).PyQt5;
         14: Result := TPyTorch(PyComps[I]).torch;
         15: Result := TTorchVision(PyComps[I]).torchvision;
         16: Result := TRemBG(PyComps[I]).rembg;
@@ -420,6 +420,7 @@ procedure TForm1.btnTestClick(Sender: TObject);
 var
   I: Integer;
   GoodImports: Integer;
+  version: Variant;
 begin
   GoodImports := 0;
   mmLog.Lines.Clear;
@@ -427,7 +428,12 @@ begin
     begin
       if PyComps[I].IsImported then
         begin
-          Log(PyComps[I].PyModuleName + ' imported OK as version ' + ModuleAsVariant(I).__version__);
+          try
+            version := ModuleAsVariant(I).__version__;
+          except
+            version := 'NO VERSION AVAILABLE';
+          end;
+          Log(PyComps[I].PyModuleName + ' imported OK as version ' + version);
           Inc(GoodImports);
         end
       else
