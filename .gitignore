@@ -24,6 +24,10 @@
 *.hpp
 *Resource.rc
 
+Entitlement.TemplateOSX.xml
+PythonSink.deployproj
+info.plist.TemplateOSX.xml
+
 # Delphi local files (user-specific info)
 *.local
 *.identcache

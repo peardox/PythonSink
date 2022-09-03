@@ -1,10 +1,9 @@
 unit Unit1;
 
-// {$DEFINE WIPEONSTART} // Uncomment to wipe Python on start
-// {$DEFINE PYTHON37} // Pick only one
-{$DEFINE PYTHON38} // Pick only one
-// {$DEFINE PYTHON39} // Pick only one
-// {$DEFINE PYTHON310} // Pick only one
+{$DEFINE WIPEONSTART} // Uncomment to wipe Python on start
+// {$DEFINE PYTHON37} // Pick only one - default = 3.10
+// {$DEFINE PYTHON38} // Pick only one - default = 3.10
+// {$DEFINE PYTHON39} // Pick only one - default = 3.10
 
 interface
 
@@ -297,7 +296,8 @@ begin
   {$ENDIF}
 
   {$IFDEF WIPEONSTART}
-  TDirectory.Delete(HomePath, True);
+  if DirectoryExists(IncludeTrailingPathDelimiter(HomePath) + pyver) then
+    TDirectory.Delete(IncludeTrailingPathDelimiter(HomePath) + pyver, True);
   {$ENDIF}
 
   PyIO  := TPythonGUIInputOutput.Create(Self);
