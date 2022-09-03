@@ -1,6 +1,10 @@
 unit Unit1;
 
 // {$DEFINE WIPEONSTART} // Uncomment to wipe Python on start
+// {$DEFINE PYTHON37} // Pick only one
+{$DEFINE PYTHON38} // Pick only one
+// {$DEFINE PYTHON39} // Pick only one
+// {$DEFINE PYTHON310} // Pick only one
 
 interface
 
@@ -12,7 +16,16 @@ uses
   FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
   PythonEngine, PyCommon, PyModule, PyEnvironment,
   PyPackage, PyEnvironment.Embeddable,
-  PyEnvironment.Embeddable.Res, PyEnvironment.Embeddable.Res.Python39,
+  PyEnvironment.Embeddable.Res,
+  {$IF DEFINED(PYTHON37)}
+  PyEnvironment.Embeddable.Res.Python37,
+  {$ELSEIF DEFINED(PYTHON38)}
+  PyEnvironment.Embeddable.Res.Python38,
+  {$ELSEIF DEFINED(PYTHON39)}
+  PyEnvironment.Embeddable.Res.Python39,
+  {$ELSE}
+  PyEnvironment.Embeddable.Res.Python310,
+  {$ENDIF}
   Boto3,
   H5Py,
   Keras,
@@ -66,7 +79,15 @@ type
 
     PyIO: TPythonGUIInputOutput;
     PyEng: TPythonEngine;
+    {$IF DEFINED(PYTHON37)}
+    PyEmbed: TPyEmbeddedResEnvironment37;
+    {$ELSEIF DEFINED(PYTHON38)}
+    PyEmbed: TPyEmbeddedResEnvironment38;
+    {$ELSEIF DEFINED(PYTHON39)}
     PyEmbed: TPyEmbeddedResEnvironment39;
+    {$ELSE}
+    PyEmbed: TPyEmbeddedResEnvironment310;
+    {$ENDIF}
 
     function ModuleAsVariant(const I: Integer): Variant;
     procedure Log(const AMsg: String);
@@ -81,7 +102,15 @@ var
   Form1: TForm1;
 
 const
+  {$IF DEFINED(PYTHON37)}
+  pyver = '3.7';
+  {$ELSEIF DEFINED(PYTHON38)}
+  pyver = '3.8';
+  {$ELSEIF DEFINED(PYTHON39)}
   pyver = '3.9';
+  {$ELSE}
+  pyver = '3.10';
+  {$ENDIF}
   pypath = 'python';
   appname = 'PythonSink';
 
@@ -277,7 +306,15 @@ begin
   PyEng.AutoLoad := False;
   PyEng.IO := PyIO;
   PyEng.RedirectIO := True;
+  {$IF DEFINED(PYTHON37)}
+  PyEmbed := TPyEmbeddedResEnvironment37.Create(Self);
+  {$ELSEIF DEFINED(PYTHON38)}
+  PyEmbed := TPyEmbeddedResEnvironment38.Create(Self);
+  {$ELSEIF DEFINED(PYTHON39)}
   PyEmbed := TPyEmbeddedResEnvironment39.Create(Self);
+  {$ELSE}
+  PyEmbed := TPyEmbeddedResEnvironment310.Create(Self);
+  {$ENDIF}
   PyEmbed.PythonEngine := PyEng;
   PyEmbed.PythonVersion := pyver;
   PyEmbed.EnvironmentPath := HomePath;
