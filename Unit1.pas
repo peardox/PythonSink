@@ -3,7 +3,7 @@ unit Unit1;
 {$DEFINE WIPEONSTART} // Uncomment to wipe Python on start
 // {$DEFINE PYTHON37} // Pick only one - default = 3.10
 // {$DEFINE PYTHON38} // Pick only one - default = 3.10
-// {$DEFINE PYTHON39} // Pick only one - default = 3.10
+ {$DEFINE PYTHON39} // Pick only one - default = 3.10
 
 interface
 
@@ -249,18 +249,14 @@ begin
   {$IF DEFINED(MACOS64) AND DEFINED(CPUX64)}
   HomePath := IncludeTrailingPathDelimiter(
               IncludeTrailingPathDelimiter(
-              IncludeTrailingPathDelimiter(
-              System.IOUtils.TPath.GetHomePath) +
-              'Library') +
+              System.IOUtils.TPath.GetLibraryPath) +
               appname) +
               pypath;
   // MacOSX with ARM64 CPU (M1 etc)
   {$ELSEIF DEFINED(MACOS64) AND DEFINED(CPUARM64)}
   HomePath := IncludeTrailingPathDelimiter(
               IncludeTrailingPathDelimiter(
-              IncludeTrailingPathDelimiter(
-              System.IOUtils.TPath.GetHomePath) +
-              'Library') +
+              System.IOUtils.TPath.GetLibraryPath) +
               appname) +
               pypath;
   // Windows X64 CPU
