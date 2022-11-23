@@ -38,5 +38,15 @@ object Form1: TForm1
       Text = 'Test Modules'
       OnClick = btnTestClick
     end
+    object btnPython: TButton
+      Position.X = 8.000000000000000000
+      Position.Y = 8.000000000000000000
+      Size.Width = 100.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'Test Python'
+      OnClick = btnPythonClick
+    end
   end
 end

@@ -7,7 +7,7 @@
         <DeviceId Condition="'$(Platform)'=='Android'">39V4C20302003803</DeviceId>
         <DeviceId Condition="'$(Platform)'=='Android64'">39V4C20302003803</DeviceId>
         <DeviceId Condition="'$(Platform)'=='iOSDevice64'"/>
-        <DeviceId Condition="'$(Platform)'=='iOSSimulator'">iPhone</DeviceId>
+        <DeviceId Condition="'$(Platform)'=='iOSSimulator'"/>
     </PropertyGroup>
     <ItemGroup Condition="'$(Platform)'=='iOSDevice64'"/>
     <ItemGroup Condition="'$(Platform)'=='Win64'"/>
@@ -24,6 +24,43 @@
         </DeployFile>
     </ItemGroup>
     <ItemGroup Condition="'$(Platform)'=='OSX64'">
+        <DeployFile Include="$(BDS)\bin\delphi_PROJECTICNS.icns" Condition="'$(Config)'=='Release'">
+            <RemoteDir>PythonSink.app\Contents\Resources\</RemoteDir>
+            <RemoteName>PythonSink.icns</RemoteName>
+            <DeployClass>ProjectOSXResource</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="OSX64\Release\PythonSink" Condition="'$(Config)'=='Release'">
+            <RemoteDir>PythonSink.app\Contents\MacOS\</RemoteDir>
+            <RemoteName>PythonSink</RemoteName>
+            <DeployClass>ProjectOutput</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+            <Required>True</Required>
+        </DeployFile>
+        <DeployFile Include="C:\DelphiComponents\PythonEnviroments\python\osx64\libpython3.9.dylib" Condition="'$(Config)'=='Debug'">
+            <RemoteDir>PythonSink.app\Contents\MacOS\</RemoteDir>
+            <RemoteName>libpython3.9.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="OSX64\Release\PythonSink.entitlements" Condition="'$(Config)'=='Release'">
+            <RemoteDir>PythonSink.app\..\</RemoteDir>
+            <RemoteName>PythonSink.entitlements</RemoteName>
+            <DeployClass>ProjectOSXEntitlements</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
         <DeployFile Include="OSX64\Debug\PythonSink.dSYM" Condition="'$(Config)'=='Debug'">
             <RemoteDir>PythonSink.app\..\$(PROJECTNAME).app.dSYM\Contents\Resources\DWARF\</RemoteDir>
             <RemoteName>PythonSink</RemoteName>
@@ -61,11 +98,38 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
+        <DeployFile Include="OSX64\Release\PythonSink.info.plist" Condition="'$(Config)'=='Release'">
+            <RemoteDir>PythonSink.app\Contents\</RemoteDir>
+            <RemoteName>Info.plist</RemoteName>
+            <DeployClass>ProjectOSXInfoPList</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="OSX64\Release\PythonSink.dSYM" Condition="'$(Config)'=='Release'">
+            <RemoteDir>PythonSink.app\..\$(PROJECTNAME).app.dSYM\Contents\Resources\DWARF\</RemoteDir>
+            <RemoteName>PythonSink</RemoteName>
+            <DeployClass>ProjectOSXDebug</DeployClass>
+            <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
         <DeployFile Include="OSX64\Debug\PythonSink.info.plist" Condition="'$(Config)'=='Debug'">
             <RemoteDir>PythonSink.app\Contents\</RemoteDir>
             <RemoteName>Info.plist</RemoteName>
             <DeployClass>ProjectOSXInfoPList</DeployClass>
             <Operation>1</Operation>
+            <LocalCommand/>
+            <RemoteCommand/>
+            <Overwrite>True</Overwrite>
+        </DeployFile>
+        <DeployFile Include="C:\DelphiComponents\PythonEnviroments\python\osx64\libpython3.9.dylib" Condition="'$(Config)'=='Release'">
+            <RemoteDir>PythonSink.app\Contents\MacOS\</RemoteDir>
+            <RemoteName>libpython3.9.dylib</RemoteName>
+            <DeployClass>File</DeployClass>
+            <Operation>0</Operation>
             <LocalCommand/>
             <RemoteCommand/>
             <Overwrite>True</Overwrite>

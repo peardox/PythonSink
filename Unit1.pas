@@ -1,5 +1,7 @@
 unit Unit1;
 
+{$DEFINE USESAFEMASK}
+
 {$DEFINE WIPEONSTART} // Uncomment to wipe Python on start
 // {$DEFINE PYTHON37} // Pick only one - default = 3.10
 // {$DEFINE PYTHON38} // Pick only one - default = 3.10
@@ -10,7 +12,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   System.Rtti, System.Generics.Collections, System.TypInfo,
-  System.Threading, System.IOUtils,
+  System.Threading, System.IOUtils, Math,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Memo.Types,
   FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
   PythonEngine, PyCommon, PyModule, PyEnvironment,
@@ -59,17 +61,19 @@ type
     mmLog: TMemo;
     Panel1: TPanel;
     btnTest: TButton;
+    btnPython: TButton;
     procedure FormCreate(Sender: TObject);
     procedure PackageBeforeInstall(Sender: TObject);
     procedure PackageAfterInstall(Sender: TObject);
-    procedure PackageInstallError(Sender: TObject; AErrorMessage: string);
+    procedure PackageInstallError(Sender: TObject; AException: Exception; var AAbort: Boolean);
     procedure PackageAfterImport(Sender: TObject);
     procedure PackageBeforeImport(Sender: TObject);
     procedure PackageBeforeUnInstall(Sender: TObject);
     procedure PackageAfterUnInstall(Sender: TObject);
-    procedure PackageUnInstallError(Sender: TObject; AErrorMessage: string);
+    procedure PackageUnInstallError(Sender: TObject; AException: Exception; var AAbort: Boolean);
     procedure PackageAddExtraUrl(APackage: TPyManagedPackage; const AUrl: string);
     procedure btnTestClick(Sender: TObject);
+    procedure btnPythonClick(Sender: TObject);
   private
     { Private declarations }
     FTask: ITask;
@@ -99,6 +103,7 @@ type
 
 var
   Form1: TForm1;
+  FPUMASK: TArithmeticExceptionMask;
 
 const
   {$IF DEFINED(PYTHON37)}
@@ -113,18 +118,53 @@ const
   pypath = 'python';
   appname = 'PythonSink';
 
+function EscapeBackslashForPython(const AStr: String): String;
+procedure SafeMaskFPUExceptions(ExceptionsMasked : boolean;
+  MatchPythonPrecision : Boolean = True);
+
 implementation
 
 {$R *.fmx}
 uses
-  Math,
   PyPackage.Manager.Pip,
   PyPackage.Manager.Defs.Pip;
+
+function EscapeBackslashForPython(const AStr: String): String;
+begin
+  Result := StringReplace(AStr, '\', '\\', [rfIgnoreCase, rfReplaceAll]);
+end;
+
+procedure SafeMaskFPUExceptions(ExceptionsMasked : boolean;
+  MatchPythonPrecision : Boolean);
+begin
+  {$IFDEF USESAFEMASK}
+  {$IF Defined(CPUX86) or Defined(CPUX64)}
+  if ExceptionsMasked then
+    begin
+    FPUMASK := GetExceptionMask;
+    SetExceptionMask([exInvalidOp, exDenormalized, exZeroDivide,
+      exOverflow, exUnderflow, exPrecision]);
+    end
+  else
+    SetExceptionMask(FPUMASK);
+  {$WARN SYMBOL_PLATFORM OFF}
+  {$IF Defined(FPC) or Defined(MSWINDOWS)}
+  if MatchPythonPrecision then
+      SetPrecisionMode(pmDouble)
+    else
+      SetPrecisionMode(pmExtended);
+  {$WARN SYMBOL_PLATFORM ON}
+  {$IFEND}
+  {$IFEND}
+  {$ELSE}
+    MaskFPUExceptions(ExceptionsMasked, MatchPythonPrecision);
+  {$IFEND}
+end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   btnTest.Enabled := False;
-
+  btnPython.Enabled := False;
   PyComps := [
               TPyManagedPackage(TBoto3),
               TPyManagedPackage(TH5Py),
@@ -144,8 +184,8 @@ begin
               TPyManagedPackage(TTorchVision),
               TPyManagedPackage(TRemBG),
               TPyManagedPackage(TScikitLearn),
-              TPyManagedPackage(TSciPy),
-              TPyManagedPackage(TTensorFlow)
+              TPyManagedPackage(TSciPy)
+//              TPyManagedPackage(TTensorFlow) Skip TF
               ];
 
   mmLog.Lines.Add('Module Count = ' + IntToStr(Length(PyComps)));
@@ -192,9 +232,9 @@ begin
   Log('Installed ' + TPyPackage(Sender).PyModuleName);
 end;
 
-procedure TForm1.PackageInstallError(Sender: TObject; AErrorMessage: string);
+procedure TForm1.PackageInstallError(Sender: TObject; AException: Exception; var AAbort: Boolean);
 begin
-  Log('Error for ' + TPyPackage(Sender).PyModuleName + ' : ' + AErrorMessage);
+  Log('Error for ' + TPyPackage(Sender).PyModuleName + ' : ' + AException.Message);
 end;
 
 procedure TForm1.PackageBeforeUnInstall(Sender: TObject);
@@ -207,9 +247,9 @@ begin
   Log('UnInstalled ' + TPyPackage(Sender).PyModuleName);
 end;
 
-procedure TForm1.PackageUnInstallError(Sender: TObject; AErrorMessage: string);
+procedure TForm1.PackageUnInstallError(Sender: TObject; AException: Exception; var AAbort: Boolean);
 begin
-  Log('Error for ' + TPyPackage(Sender).PyModuleName + ' : ' + AErrorMessage);
+  Log('Error for ' + TPyPackage(Sender).PyModuleName + ' : ' + AException.Message);
 end;
 
 procedure TForm1.PackageBeforeImport(Sender: TObject);
@@ -247,18 +287,24 @@ var
 begin
   // MacOSX with X64 CPU
   {$IF DEFINED(MACOS64) AND DEFINED(CPUX64)}
+{
   HomePath := IncludeTrailingPathDelimiter(
               IncludeTrailingPathDelimiter(
               System.IOUtils.TPath.GetLibraryPath) +
               appname) +
               pypath;
+}
+  HomePath := pypath;
   // MacOSX with ARM64 CPU (M1 etc)
   {$ELSEIF DEFINED(MACOS64) AND DEFINED(CPUARM64)}
+{
   HomePath := IncludeTrailingPathDelimiter(
               IncludeTrailingPathDelimiter(
               System.IOUtils.TPath.GetLibraryPath) +
               appname) +
               pypath;
+ }
+  HomePath := pypath;
   // Windows X64 CPU
   {$ELSEIF DEFINED(WIN64)}
   HomePath := IncludeTrailingPathDelimiter(
@@ -313,7 +359,7 @@ begin
   {$ENDIF}
   PyEmbed.PythonEngine := PyEng;
   PyEmbed.PythonVersion := pyver;
-  PyEmbed.EnvironmentPath := HomePath;
+//  PyEmbed.EnvironmentPath := HomePath;
 
   for I := 0 to Length(PyComps) - 1 do
     begin
@@ -370,7 +416,9 @@ begin
                 var I: Integer;
                 for I := 0 to Length(PyComps) - 1 do
                   begin
+                    SafeMaskFPUExceptions(True);
                     PyComps[I].Install();
+                    SafeMaskFPUExceptions(False);
                     FTask.CheckCanceled();
                   end;
               except
@@ -390,7 +438,9 @@ begin
                   var I: Integer;
                   for I := 0 to Length(PyComps) - 1 do
                     begin
+                      SafeMaskFPUExceptions(True);
                       PyComps[I].Import();
+                      SafeMaskFPUExceptions(False);
                     end;
                 except
                   on E: Exception do begin
@@ -403,6 +453,7 @@ begin
                 end;
               finally
                 btnTest.Enabled := True;
+                btnPython.Enabled := True;
               end;
               Log('All done!');
             end);
@@ -439,7 +490,7 @@ begin
         10: Result := TPandas(PyComps[I]).pandas;
         11: Result := TPillow(PyComps[I]).PIL;
         12: Result := TPSUtil(PyComps[I]).psutil;
-        13: Result := TPyQT5(PyComps[I]).PyQt5;
+        13: Result := TPyQT5(PyComps[I]).qt5;
         14: Result := TPyTorch(PyComps[I]).torch;
         15: Result := TTorchVision(PyComps[I]).torchvision;
         16: Result := TRemBG(PyComps[I]).rembg;
@@ -447,6 +498,30 @@ begin
         18: Result := TSciPy(PyComps[I]).scipy;
         19: Result := TTensorFlow(PyComps[I]).tf;
       end;
+end;
+
+procedure TForm1.btnPythonClick(Sender: TObject);
+var
+  Shim: TStringList;
+  HomePath: String;
+begin
+  HomePath := GetCurrentDir;
+  Shim := Nil;
+  try
+    Shim := TStringList.Create;
+    Shim.Add('import os');
+    Shim.Add('import sys');
+    Shim.Add('for p in sys.path:');
+    Shim.Add('    print(p)');
+    Shim.Add('__embedded_python__ = True');
+
+    SafeMaskFPUExceptions(True);
+    PyEng.ExecStrings(Shim);
+    SafeMaskFPUExceptions(False);
+  finally
+    if not(Shim = Nil) then
+      Shim.Free;
+  end;
 end;
 
 procedure TForm1.btnTestClick(Sender: TObject);
@@ -462,7 +537,9 @@ begin
       if PyComps[I].IsImported then
         begin
           try
+            SafeMaskFPUExceptions(True);
             version := ModuleAsVariant(I).__version__;
+            SafeMaskFPUExceptions(False);
           except
             version := 'NO VERSION AVAILABLE';
           end;
@@ -472,7 +549,8 @@ begin
       else
           Log(PyComps[I].PyModuleName + ' FAILED TO IMPORT');
     end;
-    Log(GoodImports.ToString + ' out of ' + Length(PyComps).ToString + ' succesful imports')
+    Log(GoodImports.ToString + ' out of ' + Length(PyComps).ToString + ' succesful imports');
+    Log('Not all modules are for import so imported may be less than total');
 end;
 
 end.
